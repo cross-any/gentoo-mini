@@ -2,7 +2,7 @@
 FROM gentoo/portage:20230710 as portage
 
 # image is based on stage3
-FROM gentoo/stage3:systemd-20230710 build
+FROM gentoo/stage3:systemd-20230710 as build
 
 # copy the entire portage volume in
 COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
