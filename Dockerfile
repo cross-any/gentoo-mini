@@ -10,6 +10,8 @@ COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
 ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
 # build mini gentoo
 RUN sed -i "s/O2/Os/g" /etc/portage/make.conf \
+    && emerge -v merge-usr \
+    && merge-usr \
     && eselect profile set 19 \
     && PYTHON_TARGETS="python3_11" USE="-multilib -split-usr" ROOT=/mini emerge -v -j$(nproc) sys-libs/glibc sys-kernel/linux-headers coreutils sys-apps/portage dev-vcs/git sys-devel/gcc \
     && cp -avf /etc/portage /mini/
