@@ -14,7 +14,8 @@ RUN sed -i "s/O2/Os/g" /etc/portage/make.conf \
     && merge-usr \
     && eselect profile set 19 \
     && mkdir -p /mini/usr/{lib,lib64,bin} && ln -s usr/bin /mini/sbin && ln -s usr/{bin,lib,lib64} /mini/ && ln -s bin /mini/usr/sbin \
-    && PYTHON_TARGETS="python3_11" USE="-multilib -split-usr openmp" ROOT=/mini emerge -v -j$(nproc) sys-libs/glibc sys-kernel/linux-headers coreutils sys-apps/portage dev-vcs/git sys-devel/gcc sys-devel/binutils  wget curl vim grep make cmake \
+    && PYTHON_TARGETS="python3_11" USE="-multilib -split-usr openmp" ROOT=/mini emerge -v -j$(nproc) sys-libs/glibc sys-kernel/linux-headers coreutils sys-apps/portage dev-vcs/git sys-devel/gcc sys-devel/binutils  \
+    awk sys-apps/shadow app-arch/gzip patch wget curl vim grep make cmake \
     && cp -avf /etc/portage /mini/etc/
 FROM scratch
 COPY --from=build /mini/ /
