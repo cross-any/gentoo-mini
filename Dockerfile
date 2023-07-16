@@ -19,6 +19,7 @@ RUN PYTHON_TARGETS="python3_11" USE="-multilib -split-usr openmp" ROOT=/mini eme
     app-arch/gzip \
     sys-process/procps \
     sys-apps/diffutils \
+    sys-apps/locale-gen \
     awk patch wget curl vim grep make cmake
 RUN cp -avf /etc/portage /mini/etc/
 FROM scratch
