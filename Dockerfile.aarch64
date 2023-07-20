@@ -1,0 +1,9 @@
+FROM crossany/crossany:aarch64-glibc236 as build
+ENV crossenv="aarch64-crossany-linux-gnu"
+ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
+# build mini gentoo
+COPY build-mini.sh repair-mini.sh /root/
+RUN /crossenv /root/build-mini.sh 
+FROM scratch
+COPY --from=build /mini/ /
+

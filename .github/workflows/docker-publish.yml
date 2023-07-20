@@ -45,10 +45,10 @@ jobs:
 
           echo DOCKER_REPO=$DOCKER_REPO
           echo DOCKER_TAG=$DOCKER_TAG
-          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker run --privileged --rm crossany/qemu
           # docker pull $DOCKER_REPO:$DOCKER_TAG
-          docker run --platform linux/arm64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG find /
-          docker run --platform linux/amd64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG find /
+          docker run --platform linux/arm64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG-arm64 find /
+          docker run --platform linux/amd64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG-amd64 find /
           # docker run --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG /cross/localrepo/examples/test-all.sh
 
   # Push base image to GitHub Packages.
@@ -82,8 +82,8 @@ jobs:
           docker run --privileged --rm tonistiigi/binfmt --install all
           # docker pull $DOCKER_REPO:$DOCKER_TAG
           docker buildx create --use
-          docker buildx build .  --platform linux/amd64 --push --file Dockerfile --tag $DOCKER_REPO:$DOCKER_TAG --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG \
-          || docker buildx build .  --platform linux/amd64 --push --file Dockerfile --tag $DOCKER_REPO:$DOCKER_TAG --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG
+          docker buildx build .  --platform linux/amd64 --push --file Dockerfile.x86_64 --tag $DOCKER_REPO:$DOCKER_TAG-amd64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-amd64
+          docker buildx build .  --platform linux/arm64 --push --file Dockerfile.aarch64 --tag $DOCKER_REPO:$DOCKER_TAG-arm64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-arm64
           # docker buildx build . --platform linux/arm64,linux/amd64 --push --file Dockerfile --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG --tag $DOCKER_REPO:$DOCKER_TAG
           docker buildx rm
   #     - name: Push image to Container Registry

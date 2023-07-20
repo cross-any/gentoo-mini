@@ -1,0 +1,18 @@
+# name the portage image
+FROM gentoo/portage:20230710 as portage
+
+# image is based on stage3
+FROM gentoo/stage3:systemd-20230710 as build
+
+# copy the entire portage volume in
+COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
+
+ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
+# build mini gentoo
+COPY build-mini.sh /root/
+COPY repair-mini.sh /root/
+RUN /root/build-mini.sh && rm -rf root/build-mini.sh
+FROM scratch
+COPY --from=build /mini/ /
+RUN /root/repair-mini.sh
+
