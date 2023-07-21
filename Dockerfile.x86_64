@@ -11,7 +11,8 @@ ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
 # build mini gentoo
 COPY build-mini.sh /root/
 COPY repair-mini.sh /root/
-RUN emerge -v patchelf && /root/build-mini.sh
+COPY nativerun /usr/bin
+RUN /root/build-mini.sh
 FROM scratch
 COPY --from=build /mini/ /
 RUN /root/repair-mini.sh
