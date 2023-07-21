@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 set -x
-ROOT=${ROOT:=/mini}
 if ! which nativerun >/dev/null 2>/dev/null; then
     /bin/ln -s time /usr/bin/nativerun 
 fi
+nativerun emerge -vn patchelf
+ROOT=${ROOT:=/mini}
 sed -i "s/O2/Os -ffunction-sections -fdata-sections/g" /etc/portage/make.conf \
     && nativerun emerge -vn merge-usr \
     && nativerun merge-usr \
@@ -32,4 +33,5 @@ done
 fi
 mkdir -p $ROOT/root
 cp -avf /root/*-mini.sh $ROOT/root/
+rm -rf $ROOT/sys/* $ROOT/proc/*
 echo build done
