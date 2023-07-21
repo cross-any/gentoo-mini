@@ -4,6 +4,9 @@ ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
 # build mini gentoo
 COPY build-mini.sh repair-mini.sh /root/
 RUN /crossenv /root/build-mini.sh 
-FROM scratch
+FROM scratch as fixed
 COPY --from=build /mini/ /
-
+COPY --from=build /var/db/repos/gentoo/ /var/db/repos/gentoo/
+RUN /root/repair-mini.sh
+FROM scratch
+COPY --from=fixed / /
