@@ -2,7 +2,7 @@
 set -e
 set -x
 if ! which nativerun >/dev/null 2>/dev/null; then
-    /bin/ln -s time /usr/bin/nativerun 
+    alias nativerun=time
 fi
 nativerun emerge -vn patchelf
 ROOT=${ROOT:=/mini}
