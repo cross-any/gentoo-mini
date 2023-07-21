@@ -47,15 +47,40 @@ jobs:
           echo DOCKER_TAG=$DOCKER_TAG
           docker run --privileged --rm crossany/qemu
           # docker pull $DOCKER_REPO:$DOCKER_TAG
-          docker run --platform linux/arm64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG-arm64 find /
           docker run --platform linux/amd64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG-amd64 find /
-          # docker run --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG /cross/localrepo/examples/test-all.sh
+
+  test-base-arm64:
+    # test after pushing image.
+    if: ${{ (!cancelled() && !failure()) }}
+    needs: push-arm64
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          # Change all uppercase to lowercase
+          DOCKER_REPO=$(echo $DOCKER_REPO | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          DOCKER_TAG=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Use Docker `latest` tag convention
+          [ "$DOCKER_TAG" == "main" ] && DOCKER_TAG=latest
+
+          echo DOCKER_REPO=$DOCKER_REPO
+          echo DOCKER_TAG=$DOCKER_TAG
+          docker run --privileged --rm crossany/qemu
+          # docker pull $DOCKER_REPO:$DOCKER_TAG
+          docker run --platform linux/arm64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG-arm64 find /
 
   # Push base image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (contains(github.event.head_commit.message, '[push]')||contains(github.event.head_commit.message, '[pushi-base]'))
+    if: github.event_name == 'push' && (contains(github.event.head_commit.message, '[push]')||contains(github.event.head_commit.message, '[push-base]'))
 
     steps:
       - uses: actions/checkout@v2
@@ -82,10 +107,53 @@ jobs:
           docker run --privileged --rm tonistiigi/binfmt --install all
           # docker pull $DOCKER_REPO:$DOCKER_TAG
           docker buildx create --use
-          docker buildx build .  --platform linux/amd64 --push --file Dockerfile.x86_64 --tag $DOCKER_REPO:$DOCKER_TAG-amd64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-amd64
-          docker buildx build .  --platform linux/arm64 --push --file Dockerfile.aarch64 --tag $DOCKER_REPO:$DOCKER_TAG-arm64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-arm64
-          # docker buildx build . --platform linux/arm64,linux/amd64 --push --file Dockerfile --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG --tag $DOCKER_REPO:$DOCKER_TAG
+          for i in $(seq 1 5); do
+            docker buildx build .  --platform linux/amd64 --push --file Dockerfile.x86_64 --tag $DOCKER_REPO:$DOCKER_TAG-amd64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-amd64 \
+            && s=0 && break || s=$? && sleep 15;
+          done;
+          if [ ! $s = '0' ; then
+            exit $s
+          fi
           docker buildx rm
+
+  push-arm64:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (contains(github.event.head_commit.message, '[push]')||contains(github.event.head_commit.message, '[push-arm64]'))
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: clean config
+        run:  git config  --unset http.https://github.com/.extraheader
+
+      - name: Log into Docker Hub Registry
+        run: echo "${{ secrets.HUB_PASSWORD }}" | docker login -u ${{ secrets.HUB_ACCOUNT }} --password-stdin
+      - name: Log into aliyun Registry
+        run: echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login -u ${{ secrets.ALIYUN_ACCOUNT }} --password-stdin registry.cn-beijing.aliyuncs.com
+
+      - name: Build image
+        run:  |
+          # Strip git ref prefix from version
+          DOCKER_TAG=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Use Docker `latest` tag convention
+          [ "$DOCKER_TAG" == "main" ] && DOCKER_TAG=latest
+
+          echo DOCKER_REPO=$DOCKER_REPO
+          echo DOCKER_TAG=$DOCKER_TAG
+
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          # docker pull $DOCKER_REPO:$DOCKER_TAG
+          docker buildx create --use
+          for i in $(seq 1 5); do
+            docker buildx build .  --platform linux/arm64 --push --file Dockerfile.aarch64 --tag $DOCKER_REPO:$DOCKER_TAG-arm64 --tag $ALIYUN_DOCKER_REPO:$DOCKER_TAG-arm64 \
+            && s=0 && break || s=$? && sleep 15;
+          done;
+          if [ ! $s = '0' ; then
+            exit $s
+          fi
+          docker buildx rm
+
   #     - name: Push image to Container Registry
   #       run: |
   #         # Change all uppercase to lowercase
