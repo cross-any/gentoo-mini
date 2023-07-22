@@ -1,12 +1,14 @@
-FROM crossany/crossany:aarch64-glibc236 as build
+FROM --platform=linux/amd64 crossany/crossany:aarch64-glibc236 as build
 ENV crossenv="aarch64-crossany-linux-gnu"
 ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
 # build mini gentoo
 COPY build-mini.sh repair-mini.sh /root/
 RUN /crossenv /root/build-mini.sh 
-FROM scratch as fixed
+
+FROM --platform=linux/arm64  scratch as fixed
 COPY --from=build /mini/ /
 COPY --from=build /var/db/repos/gentoo/ /var/db/repos/gentoo/
 RUN /root/repair-mini.sh
-FROM scratch
+
+FROM --platform=linux/arm64 scratch
 COPY --from=fixed / /
