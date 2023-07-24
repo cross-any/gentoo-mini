@@ -4,7 +4,8 @@ It's small repalcement for gentoo/stage3 docker image.
 # Tags
 https://hub.docker.com/r/crossany/gentoo-mini/tags  
 # Mirrors  
-Use aliyun if docker hub is slow for you: registry.cn-beijing.aliyuncs.com/crossany/gentoo-mini  
+Use aliyun if docker hub is slow for you:  
+  registry.cn-beijing.aliyuncs.com/crossany/gentoo-mini  
 # Run it  
 ```
 docker run --rm -ti crossany/gentoo-mini:latest uname -a
