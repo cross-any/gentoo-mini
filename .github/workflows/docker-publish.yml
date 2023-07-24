@@ -181,7 +181,7 @@ jobs:
   test-manifest:
     # test after pushing image.
     if: ${{ (!cancelled() && !failure()) }}
-    needs: [ push-arm64, push ]
+    needs: [ push-manifest ]
 
     runs-on: ubuntu-latest
 
