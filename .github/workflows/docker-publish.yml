@@ -154,6 +154,29 @@ jobs:
           fi
           docker buildx rm
 
+  push-manifest:
+    runs-on: ubuntu-latest
+    if: ${{ (!cancelled() && !failure()) }} && github.event_name == 'push' && (contains(github.event.head_commit.message, '[push]')||contains(github.event.head_commit.message, '[push-manifest]'))
+    needs: [ push-arm64, push ]
+    
+    steps:
+      - name: Log into Docker Hub Registry
+        run: echo "${{ secrets.HUB_PASSWORD }}" | docker login -u ${{ secrets.HUB_ACCOUNT }} --password-stdin
+      - name: Log into aliyun Registry
+        run: echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login -u ${{ secrets.ALIYUN_ACCOUNT }} --password-stdin registry.cn-beijing.aliyuncs.com
+
+      - name: Build image
+        run:  |
+          # Strip git ref prefix from version
+          DOCKER_TAG=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Use Docker `latest` tag convention
+          [ "$DOCKER_TAG" == "main" ] && DOCKER_TAG=latest
+
+          echo DOCKER_REPO=$DOCKER_REPO
+          echo DOCKER_TAG=$DOCKER_TAG
+          docker buildx imagetools create -t $DOCKER_REPO:$DOCKER_TAG $DOCKER_REPO:$DOCKER_TAG-arm64 $DOCKER_REPO:$DOCKER_TAG-amd64          
+          docker buildx imagetools create -t $ALIYUN_DOCKER_REPO:$DOCKER_TAG $ALIYUN_DOCKER_REPO:$DOCKER_TAG-arm64 $ALIYUN_DOCKER_REPO:$DOCKER_TAG-amd64          
   #     - name: Push image to Container Registry
   #       run: |
   #         # Change all uppercase to lowercase
