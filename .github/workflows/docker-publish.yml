@@ -177,6 +177,37 @@ jobs:
           echo DOCKER_TAG=$DOCKER_TAG
           docker buildx imagetools create -t $DOCKER_REPO:$DOCKER_TAG $DOCKER_REPO:$DOCKER_TAG-arm64 $DOCKER_REPO:$DOCKER_TAG-amd64          
           docker buildx imagetools create -t $ALIYUN_DOCKER_REPO:$DOCKER_TAG $ALIYUN_DOCKER_REPO:$DOCKER_TAG-arm64 $ALIYUN_DOCKER_REPO:$DOCKER_TAG-amd64          
+
+  test-manifest:
+    # test after pushing image.
+    if: ${{ (!cancelled() && !failure()) }}
+    needs: [ push-arm64, push ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Run tests
+        run: |
+          # Change all uppercase to lowercase
+          DOCKER_REPO=$(echo $DOCKER_REPO | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          DOCKER_TAG=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Use Docker `latest` tag convention
+          [ "$DOCKER_TAG" == "main" ] && DOCKER_TAG=latest
+
+          echo DOCKER_REPO=$DOCKER_REPO
+          echo DOCKER_TAG=$DOCKER_TAG
+          docker run --privileged --rm crossany/qemu
+          # docker pull $DOCKER_REPO:$DOCKER_TAG
+          docker run --platform linux/arm64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG uname -a
+          docker run --platform linux/amd64 --rm -v $PWD:/cross/localrepo $DOCKER_REPO:$DOCKER_TAG uname -a
+
+
+
+
   #     - name: Push image to Container Registry
   #       run: |
   #         # Change all uppercase to lowercase
